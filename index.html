@@ -349,21 +349,23 @@
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .gallery-item:hover {
             transform: translateY(-10px) scale(1.05);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
             z-index: 2;
-            background: rgba(255, 255, 255, 0.15);
         }
         
-        .placeholder-icon {
-            font-size: 3rem;
-            color: rgba(255, 255, 255, 0.3);
+        .gallery-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .gallery-item:hover .gallery-img {
+            transform: scale(1.1);
         }
         
         .gallery-overlay {
@@ -374,17 +376,26 @@
             background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
             color: white;
             padding: 15px;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .gallery-item:hover .gallery-overlay {
-            transform: translateY(0);
+            opacity: 1;
         }
         
         .gallery-caption {
             font-size: 0.9rem;
             font-weight: bold;
+        }
+        
+        .gallery-loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.3);
         }
         
         .poll-section {
@@ -534,10 +545,6 @@
                 height: 150px;
             }
             
-            .placeholder-icon {
-                font-size: 2.5rem;
-            }
-            
             .poll-options {
                 flex-direction: column;
                 align-items: center;
@@ -588,7 +595,7 @@
         <p class="subtitle">Время, прошедшее с 10 марта 2021 года с точностью до секунды</p>
         
         <div class="name-section">
-            <div class="loved-name" id="lovedName">Даша</div> </dr>
+            <div class="loved-name" id="lovedName">Даша</div>
             <div class="date-display">
                 <i class="far fa-calendar"></i> Начало отсчёта: 10 марта 2021 года, 00:00:00
             </div>
@@ -674,7 +681,7 @@
                 Галерея воспоминаний
             </h2>
             <div class="gallery-container" id="galleryContainer">
-                <!-- Пустая галерея -->
+                <!-- Галерея будет заполнена случайными изображениями -->
             </div>
         </div>
         
@@ -716,19 +723,55 @@
         
         // Константы
         const START_DATE = new Date('2021-03-10T00:00:00');
-        const lovedName = "Даня";
+        const lovedName = "Даша";
         
-        // Фразы для ответов
+        // Рандомные изображения для галереи (Unsplash)
+        const galleryImages = [
+            {
+                url: 'visibality/1.jpg',
+                caption: 'Наше первое знакомство'
+            },
+            {
+                url: '',
+                caption: 'Незабываемые моменты'
+            },
+            {
+                url: '',
+                caption: 'Счастливые дни вместе'
+            },
+            {
+                url: '',
+                caption: 'Теплые вечера'
+            },
+            {
+                url: '',
+                caption: 'Улыбка, которая согревает'
+            },
+            {
+                url: '',
+                caption: 'Лучшие моменты жизни'
+            },
+            {
+                url: '',
+                caption: 'Вместе навсегда'
+            },
+            {
+                url: '',
+                caption: 'Мечты о будущем'
+            }
+        ];
+        
+        // Фразы для ответов (обновлены для Даши)
         const yesPhrases = [
             "Да, безусловно! Это самое прекрасное чувство в мире! ❤️",
-            "Конечно да! Моё сердце бьётся только для Дани! 💓",
-            "Абсолютно да! Каждая секунда с ним - это счастье! 🌟",
-            "Ещё как да! Он делает мой мир ярче! ✨",
+            "Конечно да! Моё сердце бьётся только для Даши! 💓",
+            "Абсолютно да! Каждая секунда с ней - это счастье! 🌟",
+            "Ещё как да! Она делает мой мир ярче! ✨",
             "Без сомнения да! Это любовь на всю жизнь! 💕",
             "Сто раз да! Нет никого лучше в этом мире! 🥰",
-            "Определённо да! Он - смысл моей жизни! 💖",
+            "Определённо да! Она - смысл моей жизни! 💖",
             "Разумеется да! Эта любовь с 10 марта 2021 года! 📅",
-            "Несомненно да! Каждый день я люблю его сильнее! 💘",
+            "Несомненно да! Каждый день я люблю её сильнее! 💘",
             "ДА-ДА-ДА! Это самая сильная любовь во Вселенной! 🌌"
         ];
         
@@ -745,49 +788,54 @@
             "К сожалению, нет... Но мир полон неожиданностей? 🌈"
         ];
         
-        // Галерея (пустые элементы)
-        const galleryCaptions = [
-            "Наше первое знакомство",
-            "Незабываемые моменты",
-            "Счастливые дни вместе",
-            "Теплые вечера",
-            "Улыбка, которая согревает",
-            "Лучшие моменты жизни",
-            "Вместе навсегда",
-            "Мечты о будущем"
-        ];
-        
-        // Инициализация пустой галереи
+        // Инициализация галереи с рандомными изображениями
         function initGallery() {
-            galleryCaptions.forEach((caption, index) => {
-                const galleryItem = document.createElement('div');
-                galleryItem.className = 'gallery-item';
-                galleryItem.innerHTML = `
-                    <div class="placeholder-icon">
-                        <i class="fas fa-heart"></i>
-                    </div>
-                    <div class="gallery-overlay">
-                        <div class="gallery-caption">${caption}</div>
-                    </div>
-                `;
-                galleryContainer.appendChild(galleryItem);
+            galleryContainer.innerHTML = '<div class="gallery-loader"><i class="fas fa-spinner fa-spin"></i> Загрузка галереи...</div>';
+            
+            try {
+                // Перемешиваем массив изображений для разнообразия
+                const shuffledImages = [...galleryImages].sort(() => Math.random() - 0.5);
                 
-                // Добавляем обработчик клика
-                galleryItem.addEventListener('click', () => {
-                    showFullScreenPlaceholder(caption);
+                // Создаем элементы галереи для каждого изображения
+                const galleryHTML = shuffledImages.map((image, index) => {
+                    return `
+                        <div class="gallery-item" data-index="${index}">
+                            <img src="${image.url}" alt="${image.caption}" class="gallery-img" loading="lazy" 
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzBjMjQ2MSIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNmZjlmZjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSAkew                            indexKzF9PC90ZXh0Pjwvc3ZnPg=='">
+                            <div class="gallery-overlay">
+                                <div class="gallery-caption">${image.caption}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                galleryContainer.innerHTML = galleryHTML;
+                
+                // Добавляем обработчики клика для каждого элемента галереи
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        showFullScreenImage(index);
+                    });
                 });
-            });
+                
+            } catch (error) {
+                console.error('Ошибка загрузки галереи:', error);
+                galleryContainer.innerHTML = '<div style="color: #ff9ff3; padding: 20px;">Не удалось загрузить галерею. Пожалуйста, проверьте подключение к интернету.</div>';
+            }
         }
         
-        // Показать заглушку на весь экран
-        function showFullScreenPlaceholder(caption) {
+        // Показать изображение на весь экран
+        function showFullScreenImage(index) {
+            const image = galleryImages[index];
+            
             const overlay = document.createElement('div');
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
             overlay.style.left = '0';
             overlay.style.width = '100%';
             overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
+            overlay.style.backgroundColor = 'rgba(0,0,0,0.95)';
             overlay.style.zIndex = '1000';
             overlay.style.display = 'flex';
             overlay.style.flexDirection = 'column';
@@ -795,28 +843,88 @@
             overlay.style.alignItems = 'center';
             overlay.style.cursor = 'pointer';
             
-            const icon = document.createElement('div');
-            icon.innerHTML = '<i class="fas fa-heart" style="font-size: 5rem; color: #ff9ff3;"></i>';
+            const img = document.createElement('img');
+            img.src = image.url;
+            img.style.maxWidth = '90%';
+            img.style.maxHeight = '80%';
+            img.style.objectFit = 'contain';
+            img.style.borderRadius = '10px';
+            img.style.boxShadow = '0 0 30px rgba(255, 159, 243, 0.3)';
+            
+            // Добавляем обработчик ошибки для изображения
+            img.onerror = function() {
+                this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzBjMjQ2MSIvPjx0ZXh0IHg9IjIwMCIgeT0iMjAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiNmZjlmZjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgZm91bmQ8L3RleHQ+PHRleHQgeD0iMjAwIiB5PSIyNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2M4ZDZlNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPiR7aW1hZ2UuY2FwdGlvbn08L3RleHQ+PC9zdmc+';
+            };
             
             const captionEl = document.createElement('div');
-            captionEl.textContent = caption;
-            captionEl.style.color = 'white';
+            captionEl.textContent = image.caption;
+            captionEl.style.color = '#ff9ff3';
             captionEl.style.marginTop = '20px';
-            captionEl.style.fontSize = '1.5rem';
+            captionEl.style.fontSize = '1.8rem';
             captionEl.style.textAlign = 'center';
             captionEl.style.padding = '0 20px';
+            captionEl.style.fontWeight = 'bold';
             
-            const message = document.createElement('div');
-            message.textContent = 'Здесь могла быть ваша фотография';
-            message.style.color = '#c8d6e5';
-            message.style.marginTop = '10px';
-            message.style.fontSize = '1rem';
+            const counterEl = document.createElement('div');
+            counterEl.textContent = `${index + 1} / ${galleryImages.length}`;
+            counterEl.style.color = '#c8d6e5';
+            counterEl.style.marginTop = '10px';
+            counterEl.style.fontSize = '1.2rem';
             
-            overlay.appendChild(icon);
+            overlay.appendChild(img);
             overlay.appendChild(captionEl);
-            overlay.appendChild(message);
+            overlay.appendChild(counterEl);
             
-            // Закрыть при клике
+            // Кнопки навигации
+            const prevBtn = document.createElement('button');
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.style.position = 'absolute';
+            prevBtn.style.left = '20px';
+            prevBtn.style.top = '50%';
+            prevBtn.style.transform = 'translateY(-50%)';
+            prevBtn.style.background = 'rgba(255, 159, 243, 0.3)';
+            prevBtn.style.border = 'none';
+            prevBtn.style.borderRadius = '50%';
+            prevBtn.style.width = '60px';
+            prevBtn.style.height = '60px';
+            prevBtn.style.color = 'white';
+            prevBtn.style.fontSize = '1.5rem';
+            prevBtn.style.cursor = 'pointer';
+            prevBtn.style.display = index > 0 ? 'block' : 'none';
+            
+            const nextBtn = document.createElement('button');
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.style.position = 'absolute';
+            nextBtn.style.right = '20px';
+            nextBtn.style.top = '50%';
+            nextBtn.style.transform = 'translateY(-50%)';
+            nextBtn.style.background = 'rgba(255, 159, 243, 0.3)';
+            nextBtn.style.border = 'none';
+            nextBtn.style.borderRadius = '50%';
+            nextBtn.style.width = '60px';
+            nextBtn.style.height = '60px';
+            nextBtn.style.color = 'white';
+            nextBtn.style.fontSize = '1.5rem';
+            nextBtn.style.cursor = 'pointer';
+            nextBtn.style.display = index < galleryImages.length - 1 ? 'block' : 'none';
+            
+            // Навигация
+            prevBtn.onclick = (e) => {
+                e.stopPropagation();
+                document.body.removeChild(overlay);
+                setTimeout(() => showFullScreenImage(index - 1), 50);
+            };
+            
+            nextBtn.onclick = (e) => {
+                e.stopPropagation();
+                document.body.removeChild(overlay);
+                setTimeout(() => showFullScreenImage(index + 1), 50);
+            };
+            
+            overlay.appendChild(prevBtn);
+            overlay.appendChild(nextBtn);
+            
+            // Закрыть при клике на оверлей
             overlay.addEventListener('click', () => {
                 document.body.removeChild(overlay);
             });
